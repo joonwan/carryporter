@@ -1,0 +1,57 @@
+HELP.md
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
+.vscode/
+
+### Environment Variables ###
+.backend.env
+.env
+### macOS ###
+.DS_Store
+
+### Logs ###
+*.log
+logs/
+/docs/
+/DOCKER_README.md
+/docker-compose.yml
+/.env.example
+/mosquitto/data/
+/mosquitto/log/
+/mosquitto/config/mosquitto.conf
+
+# MQTT / test subscriber clients
+carryporter-client-subscriber-*/
+carryporter-test-client-subscriber-*/

@@ -1,0 +1,397 @@
+@import "tailwindcss";
+
+@layer components {
+  /* SF 느낌의 유리 카드 효과 */
+  .glass-card {
+    @apply bg-slate-900/40 backdrop-blur-md border border-slate-800 rounded-xl shadow-2xl;
+  }
+
+  /* 사이버네틱 네온 효과 */
+  .neon-border-cyan {
+    @apply border-accent-cyan/50 shadow-[0_0_15px_rgba(0,212,255,0.3)];
+  }
+
+  .neon-icon-cyan {
+    @apply text-accent-cyan drop-shadow-[0_0_8px_rgba(0,212,255,0.8)];
+  }
+}
+
+/* 커스텀 애니메이션 정의 */
+@keyframes scan {
+  0% { top: 0%; }
+  100% { top: 100%; }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes reverse-spin {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+.animate-scan {
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(to right, transparent, #00d4ff, transparent);
+  animation: scan 3s linear infinite;
+  box-shadow: 0 0 15px #00d4ff;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 15s linear infinite;
+}
+
+.animate-reverse-spin {
+  animation: reverse-spin 25s linear infinite;
+}
+
+/* 디자인 토큰 정의 - Figma 기반 */
+@theme {
+  /* 배경색 */
+  --color-bg-primary: rgb(10, 15, 28);
+  --color-bg-secondary: rgb(17, 24, 39);
+  --color-bg-tertiary: rgb(15, 20, 25);
+  --color-bg-card: rgba(17, 24, 39, 0.8);
+
+  /* 강조색 */
+  --color-accent-cyan: rgb(0, 211, 242);
+  --color-accent-blue: rgb(43, 127, 255);
+  --color-accent-purple: rgb(152, 16, 250);
+
+  /* 상태 색상 */
+  --color-status-active: rgb(34, 197, 94);
+  --color-status-warning: rgb(234, 179, 8);
+  --color-status-error: rgb(239, 68, 68);
+  --color-status-info: rgb(59, 130, 246);
+
+  /* 텍스트 색상 */
+  --color-text-primary: rgb(255, 255, 255);
+  --color-text-secondary: rgb(106, 114, 130);
+  --color-text-muted: rgb(75, 85, 99);
+
+  /* 테두리 색상 */
+  --color-border-default: rgba(75, 85, 99, 0.5);
+  --color-border-accent: rgba(0, 211, 242, 0.3);
+}
+
+/* 기본 스타일 */
+body {
+  margin: 0;
+  font-family: 'Arimo', 'Inter', system-ui, -apple-system, sans-serif;
+  background: linear-gradient(180deg,
+      var(--color-bg-primary) 0%,
+      var(--color-bg-secondary) 50%,
+      var(--color-bg-tertiary) 100%);
+  color: var(--color-text-primary);
+  min-height: 100vh;
+}
+
+/* 그라데이션 타이틀 스타일 */
+.gradient-title {
+  background: linear-gradient(90deg,
+      var(--color-accent-cyan) 0%,
+      var(--color-accent-blue) 50%,
+      var(--color-accent-purple) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* 카드 기본 스타일 */
+.card {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border-default);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+}
+
+/* 상태 인디케이터 */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.status-dot--active {
+  background: var(--color-status-active);
+  box-shadow: 0 0 8px var(--color-status-active);
+}
+
+.status-dot--warning {
+  background: var(--color-status-warning);
+  box-shadow: 0 0 8px var(--color-status-warning);
+}
+
+.status-dot--error {
+  background: var(--color-status-error);
+  box-shadow: 0 0 8px var(--color-status-error);
+}
+
+/* 스크롤바 스타일 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-default);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+/* ============================================ */
+/* Glassmorphism 모달 스타일 */
+/* ============================================ */
+
+/* 모달 오버레이 */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 15, 28, 0.8);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Glassmorphism 모달 컨테이너 */
+.glass-modal {
+  background: rgba(17, 24, 39, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(75, 85, 99, 0.4);
+  border-radius: 16px;
+  box-shadow:
+    0 25px 50px -12px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Glassmorphism 카드 */
+.glass-card {
+  background: rgba(17, 24, 39, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(75, 85, 99, 0.3);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+  background: rgba(17, 24, 39, 0.8);
+  border-color: rgba(0, 211, 242, 0.3);
+  box-shadow: 0 0 20px rgba(0, 211, 242, 0.1);
+}
+
+/* ============================================ */
+/* Neon Glow 효과 */
+/* ============================================ */
+
+/* 네온 아이콘 스타일 - 시안 */
+.neon-icon-cyan {
+  color: var(--color-accent-cyan);
+  filter: drop-shadow(0 0 4px var(--color-accent-cyan)) drop-shadow(0 0 8px rgba(0, 211, 242, 0.5));
+}
+
+/* 네온 아이콘 스타일 - 그린 (Available) */
+.neon-icon-green {
+  color: var(--color-status-active);
+  filter: drop-shadow(0 0 4px var(--color-status-active)) drop-shadow(0 0 8px rgba(34, 197, 94, 0.5));
+}
+
+/* 네온 아이콘 스타일 - 오렌지 (In Use) */
+.neon-icon-orange {
+  color: var(--color-status-warning);
+  filter: drop-shadow(0 0 4px var(--color-status-warning)) drop-shadow(0 0 8px rgba(234, 179, 8, 0.5));
+}
+
+/* 네온 아이콘 스타일 - 퍼플 */
+.neon-icon-purple {
+  color: var(--color-accent-purple);
+  filter: drop-shadow(0 0 4px var(--color-accent-purple)) drop-shadow(0 0 8px rgba(152, 16, 250, 0.5));
+}
+
+/* 네온 테두리 (Available 락커) */
+.neon-border-green {
+  border: 1px solid var(--color-status-active);
+  box-shadow:
+    0 0 8px rgba(34, 197, 94, 0.3),
+    inset 0 0 8px rgba(34, 197, 94, 0.1);
+}
+
+/* 네온 테두리 (In Use 락커) */
+.neon-border-orange {
+  border: 1px solid var(--color-status-warning);
+  box-shadow:
+    0 0 8px rgba(234, 179, 8, 0.3),
+    inset 0 0 8px rgba(234, 179, 8, 0.1);
+}
+
+/* 네온 테두리 (Selected) */
+.neon-border-cyan {
+  border: 1px solid var(--color-accent-cyan);
+  box-shadow:
+    0 0 12px rgba(0, 211, 242, 0.4),
+    inset 0 0 8px rgba(0, 211, 242, 0.1);
+}
+
+/* ============================================ */
+/* 그라데이션 버튼 */
+/* ============================================ */
+
+.gradient-button {
+  background: linear-gradient(90deg, var(--color-accent-cyan) 0%, var(--color-accent-purple) 100%);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-weight: 600;
+  padding: 12px 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(0, 211, 242, 0.3);
+}
+
+.gradient-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 30px rgba(0, 211, 242, 0.4);
+}
+
+.gradient-button:active {
+  transform: translateY(0);
+}
+
+/* ============================================ */
+/* 애니메이션 */
+/* ============================================ */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slideUp {
+  animation: slideUp 0.3s ease-out;
+}
+
+/* ===== Light Mode 스타일 ===== */
+.light-mode {
+  --color-bg-primary: rgb(248, 250, 252);
+  --color-bg-secondary: rgb(241, 245, 249);
+  --color-bg-tertiary: rgb(226, 232, 240);
+  --color-bg-card: rgba(255, 255, 255, 0.9);
+
+  --color-text-primary: rgb(15, 23, 42);
+  --color-text-secondary: rgb(71, 85, 105);
+  --color-text-muted: rgb(148, 163, 184);
+
+  --color-border-default: rgba(148, 163, 184, 0.5);
+  --color-border-accent: rgba(6, 182, 212, 0.4);
+}
+
+.light-mode body,
+.light-mode {
+  background: linear-gradient(180deg,
+      var(--color-bg-primary) 0%,
+      var(--color-bg-secondary) 50%,
+      var(--color-bg-tertiary) 100%);
+  color: var(--color-text-primary);
+}
+
+.light-mode .glass-modal {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+}
+
+.light-mode .glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+}
+
+.light-mode .gradient-title {
+  background: linear-gradient(90deg,
+      rgb(6, 182, 212) 0%,
+      rgb(59, 130, 246) 50%,
+      rgb(147, 51, 234) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.light-mode .modal-overlay {
+  background: rgba(15, 23, 42, 0.4);
+}
+
+Light Mode 사이드바
+.light-mode aside {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+/* Custom Scrollbar Styles for RobotsPage */
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #cbd5e1, #94a3b8);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #94a3b8, #64748b);
+}
+
+/* Firefox */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #94a3b8 #f1f5f9;
+}
+
+@keyframes scroll-left {
+  0% { transform: translateX(100vw); }
+  100% { transform: translateX(-100%); }
+}
+
+.neon-text {
+  font-size: 20vh;
+  color: #39FF14;
+  font-weight: 900;
+  text-shadow: 0 0 20px #39FF14, 0 0 40px #39FF14;
+  white-space: nowrap;
+  position: absolute;
+  will-change: transform;
+}

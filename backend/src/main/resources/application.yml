@@ -1,0 +1,68 @@
+# ===========================================
+# 공통 설정 (모든 프로파일 공통)
+# ===========================================
+server:
+  servlet:
+    context-path: ${CONTEXT_PATH:/api}
+  multipart:
+    max-file-size: 20MB
+    max-request-size: 20MB
+
+spring:
+  profiles:
+    active: local
+  application:
+    name: carryporter
+
+# JWT 설정
+jwt:
+  secret: ${JWT_SECRET:c2lsdmVybGlnaHQtZWoxMDEtY2Fycnlwb3J0ZXItc2VjcmV0LWtleS1mb3Itand0LXRva2VuLWdlbmVyYXRpb24=}
+  expiration_time: ${JWT_EXPIRATION_TIME:86400000} #변경예정
+  refresh_expiration_time: ${JWT_REFRESH_EXPIRATION_TIME:86400000} # [수정] Refresh Token: 24시간 (1일)
+
+logging:
+  level:
+    com.e101.carryporter: ${LOGGING_LEVEL_ROOT:debug}
+    org.springframework.integration: info
+    org.eclipse.paho.client: info
+
+---
+# ===========================================
+# local 프로파일 전용 설정
+# ===========================================
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:demoapp}
+    username: ${DB_USER:root}
+    password: ${DB_PASS:1234}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:update}
+    show-sql: ${JPA_SHOW_SQL:true}
+    properties:
+      hibernate:
+        format_sql: true
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+mqtt:
+  broker:
+    url: tcp://${MQTT_HOST:localhost}:${MQTT_PORT:1883}
+    username: ${MQTT_USER:admin}
+    password: ${MQTT_PASS:1234}
+  client:
+    id: ${MQTT_CLIENT_ID:carryporter-client}
+
+mattermost:
+  enabled: true  # 알림 발송 여부
+  webhook-url: ${MM_WEBHOOK_URL:https://meeting.ssafy.com/hooks/yoqix7fof3fo3fczu7i64z7yqr}
+
+ocr:
+  server:
+    url: ${OCR_SERVER_URL:http://localhost:8020}

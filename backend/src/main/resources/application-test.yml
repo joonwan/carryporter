@@ -1,0 +1,30 @@
+# ===========================================
+# test 프로파일 전용 설정
+# ===========================================
+spring:
+  config:
+    activate:
+      on-profile: test
+  main:
+    allow-bean-definition-overriding: true
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  # datasource, redis는 Testcontainers @ServiceConnection + @DynamicPropertySource로 자동 설정됨
+
+mqtt:
+  broker:
+    # IntegrationTestSupport의 DynamicPropertySource가 동적으로 설정
+    url: tcp://${MQTT_HOST:localhost}:${MQTT_PORT:1883}
+    username:
+    password:
+  client:
+    id: carryporter-test-client
+
+mattermost:
+  enabled: true  # true로 하면 테스트에서도 mm이 가고, false로 하면 mm이 가지 않음
+  webhook-url: ${TEST_MM_WEBHOOK_URL:https://meeting.ssafy.com/hooks/yoqix7fof3fo3fczu7i64z7yqr}

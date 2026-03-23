@@ -1,0 +1,263 @@
+stages:
+  - notify
+
+variables:
+  # Mattermost Webhook URL은 GitLab CI/CD Variables에서 설정
+  # Settings > CI/CD > Variables > MATTERMOST_WEBHOOK_URL
+  
+  # 서비스 URL 설정
+  USER_PAGE_URL: "https://i14e101.p.ssafy.io/"
+  ADMIN_PAGE_URL: "https://i14e101.p.ssafy.io/admin"
+  BACKEND_API_URL: "https://i14e101.p.ssafy.io/api"
+
+# ============================================
+# MR 생성/업데이트 알림
+# ============================================
+notify_mr_created:
+  stage: notify
+  image: alpine:latest
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  before_script:
+    - apk add --no-cache curl jq git
+  script:
+    - |
+      echo "🔍 Analyzing changed files..."
+      
+      # 변경된 파일 분석
+      CHANGED_FILES=$(git diff --name-only $CI_MERGE_REQUEST_DIFF_BASE_SHA..$CI_COMMIT_SHA 2>/dev/null || echo "")
+      
+      if [ -z "$CHANGED_FILES" ]; then
+        CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "unknown")
+      fi
+      
+      echo "Changed files:"
+      echo "$CHANGED_FILES"
+      
+      # 변경 영역 감지
+      BACKEND_CHANGED="false"
+      FRONTEND_CHANGED="false"
+      NGINX_CHANGED="false"
+      
+      echo "$CHANGED_FILES" | grep -q "^backend/" && BACKEND_CHANGED="true"
+      echo "$CHANGED_FILES" | grep "^frontend/" | grep -v "^frontend/nginx/" | grep -q "." && FRONTEND_CHANGED="true"
+      echo "$CHANGED_FILES" | grep -q "^frontend/nginx/" && NGINX_CHANGED="true"
+      
+      echo "Backend: $BACKEND_CHANGED, Frontend: $FRONTEND_CHANGED, Nginx: $NGINX_CHANGED"
+      
+      # 변경된 서비스 링크 섹션 생성
+      SERVICES_TEXT=""
+      
+      if [ "$BACKEND_CHANGED" = "true" ]; then
+        SERVICES_TEXT="${SERVICES_TEXT}:spring: [Backend Spring Server](${BACKEND_API_URL})\n"
+      fi
+      
+      if [ "$FRONTEND_CHANGED" = "true" ]; then
+        SERVICES_TEXT="${SERVICES_TEXT}:react: [Frontend User Page](${USER_PAGE_URL})\n"
+        SERVICES_TEXT="${SERVICES_TEXT}:lock: [Frontend Admin Page](${ADMIN_PAGE_URL})\n"
+      fi
+      
+      if [ "$NGINX_CHANGED" = "true" ]; then
+        SERVICES_TEXT="${SERVICES_TEXT}:gear: Nginx Config 변경됨\n"
+      fi
+      
+      # 서비스 섹션이 있으면 헤더 추가
+      if [ -n "$SERVICES_TEXT" ]; then
+        SERVICES_SECTION="\n---\n**🔧 변경된 서비스**\n${SERVICES_TEXT}"
+      else
+        SERVICES_SECTION=""
+      fi
+      
+      # 특수문자 이스케이프
+      TITLE=$(echo "$CI_MERGE_REQUEST_TITLE" | sed 's/"/\\"/g' | sed "s/'/\\'/g")
+      AUTHOR="$GITLAB_USER_NAME"
+      
+      # MR 링크
+      MR_URL="${CI_MERGE_REQUEST_PROJECT_URL}/-/merge_requests/${CI_MERGE_REQUEST_IID}"
+      
+      # Mattermost 메시지 전송
+      curl -s -X POST -H 'Content-Type: application/json' -d '{
+        "username": "'"$AUTHOR"'",
+        "icon_url": "https://about.gitlab.com/images/press/press-kit-icon.svg",
+        "attachments": [
+          {
+            "color": "#28a745",
+            "text": "### :frog: '"$AUTHOR"' MR Generated!!!!!!! :frog:\n\n:twisted_rightwards_arrows: ['"$TITLE"']('"$MR_URL"')\n서둘러서 코드 리뷰 해주세요~! 수정 필요할 경우 작성자 태그해주세요!!\n\n:pencil2: **Assignee:** @'"$AUTHOR"'\n:eyes: **Reviewer:** (지정 필요)\n:dart: **Target:** `'"$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"'`'"$SERVICES_SECTION"'"
+          }
+        ]
+      }' "$MATTERMOST_WEBHOOK_URL"
+      
+      echo "✅ MR notification sent!"
+
+# ============================================
+# Merge 성공 알림 (develop 브랜치)
+# ============================================
+notify_merge_success:
+  stage: notify
+  image: alpine:latest
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop" && $CI_PIPELINE_SOURCE == "push"
+  before_script:
+    - apk add --no-cache curl jq git
+  script:
+    - |
+      echo "🔍 Analyzing changed files for merge notification..."
+      
+      # 변경된 파일 분석
+      CHANGED_FILES=$(git diff-tree -m --no-commit-id --name-only -r HEAD 2>/dev/null || git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "")
+      
+      echo "Changed files:"
+      echo "$CHANGED_FILES"
+      
+      # 변경 영역 감지
+      BACKEND_CHANGED="false"
+      FRONTEND_CHANGED="false"
+      NGINX_CHANGED="false"
+      
+      echo "$CHANGED_FILES" | grep -q "^backend/" && BACKEND_CHANGED="true"
+      echo "$CHANGED_FILES" | grep "^frontend/" | grep -v "^frontend/nginx/" | grep -q "." && FRONTEND_CHANGED="true"
+      echo "$CHANGED_FILES" | grep -q "^frontend/nginx/" && NGINX_CHANGED="true"
+      
+      echo "Backend: $BACKEND_CHANGED, Frontend: $FRONTEND_CHANGED, Nginx: $NGINX_CHANGED"
+      
+      # 변경된 서비스 링크 섹션 생성
+      SERVICES_TEXT=""
+      
+      if [ "$BACKEND_CHANGED" = "true" ]; then
+        SERVICES_TEXT="${SERVICES_TEXT}:spring: [Backend Spring Server](${BACKEND_API_URL})\n"
+      fi
+      
+      if [ "$FRONTEND_CHANGED" = "true" ]; then
+        SERVICES_TEXT="${SERVICES_TEXT}:react: [Frontend User Page](${USER_PAGE_URL})\n"
+        SERVICES_TEXT="${SERVICES_TEXT}:lock: [Frontend Admin Page](${ADMIN_PAGE_URL})\n"
+      fi
+      
+      if [ "$NGINX_CHANGED" = "true" ]; then
+        SERVICES_TEXT="${SERVICES_TEXT}:gear: Nginx Config\n"
+      fi
+      
+      # 서비스 점검 섹션
+      if [ -n "$SERVICES_TEXT" ]; then
+        SERVICES_SECTION="\n---\n**서비스 점검하러 가기**\n${SERVICES_TEXT}"
+      else
+        SERVICES_SECTION=""
+      fi
+      
+      # 특수문자 이스케이프
+      AUTHOR="$GITLAB_USER_NAME"
+      COMMIT_MSG=$(echo "$CI_COMMIT_MESSAGE" | head -1 | sed 's/"/\\"/g' | sed "s/'/\\'/g")
+      
+      # Mattermost 메시지 전송
+      curl -s -X POST -H 'Content-Type: application/json' -d '{
+        "username": "'"$AUTHOR"'",
+        "icon_url": "https://about.gitlab.com/images/press/press-kit-icon.svg",
+        "attachments": [
+          {
+            "color": "#0052CC",
+            "text": "### :palm_tree: Successfully Merged :palm_tree:\n\n:twisted_rightwards_arrows: '"$COMMIT_MSG"'\n\n:pencil2: **Assignee:** @'"$AUTHOR"'\n:dart: **Target:** `'"$CI_COMMIT_BRANCH"'`\n\n**Pipeline Success!**'"$SERVICES_SECTION"'"
+          }
+        ]
+      }' "$MATTERMOST_WEBHOOK_URL"
+      
+      echo "✅ Merge success notification sent!"
+
+# ============================================
+# Merge 성공 알림 (release 브랜치 - 배포)
+# ============================================
+notify_release_success:
+  stage: notify
+  image: alpine:latest
+  rules:
+    - if: $CI_COMMIT_BRANCH == "release" && $CI_PIPELINE_SOURCE == "push"
+  before_script:
+    - apk add --no-cache curl jq git
+  script:
+    - |
+      echo "🚀 Release branch merge detected!"
+      
+      # 변경된 파일 분석
+      CHANGED_FILES=$(git diff-tree -m --no-commit-id --name-only -r HEAD 2>/dev/null || git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "")
+      
+      # 변경 영역 감지
+      BACKEND_CHANGED="false"
+      FRONTEND_CHANGED="false"
+      
+      echo "$CHANGED_FILES" | grep -q "^backend/" && BACKEND_CHANGED="true"
+      echo "$CHANGED_FILES" | grep "^frontend/" | grep -v "^frontend/nginx/" | grep -q "." && FRONTEND_CHANGED="true"
+      
+      # 배포된 서비스 섹션
+      SERVICES_TEXT=""
+      
+      if [ "$BACKEND_CHANGED" = "true" ]; then
+        SERVICES_TEXT="${SERVICES_TEXT}:spring: [Backend Spring Server](${BACKEND_API_URL})\n"
+      fi
+      
+      if [ "$FRONTEND_CHANGED" = "true" ]; then
+        SERVICES_TEXT="${SERVICES_TEXT}:react: [Frontend User Page](${USER_PAGE_URL})\n"
+        SERVICES_TEXT="${SERVICES_TEXT}:lock: [Frontend Admin Page](${ADMIN_PAGE_URL})\n"
+      fi
+      
+      if [ -n "$SERVICES_TEXT" ]; then
+        SERVICES_SECTION="\n---\n**🌐 배포된 서비스 확인하기**\n${SERVICES_TEXT}"
+      else
+        SERVICES_SECTION=""
+      fi
+      
+      AUTHOR="$GITLAB_USER_NAME"
+      COMMIT_MSG=$(echo "$CI_COMMIT_MESSAGE" | head -1 | sed 's/"/\\"/g')
+      
+      curl -s -X POST -H 'Content-Type: application/json' -d '{
+        "username": "'"$AUTHOR"'",
+        "icon_url": "https://about.gitlab.com/images/press/press-kit-icon.svg",
+        "attachments": [
+          {
+            "color": "#6f42c1",
+            "text": "### :rocket: Production Deployed! :rocket:\n\n:twisted_rightwards_arrows: '"$COMMIT_MSG"'\n\n:pencil2: **Deployer:** @'"$AUTHOR"'\n:dart: **Branch:** `release`\n\n**✅ 배포가 완료되었습니다!**'"$SERVICES_SECTION"'"
+          }
+        ]
+      }' "$MATTERMOST_WEBHOOK_URL"
+      
+      echo "✅ Release notification sent!"
+
+# ============================================
+# Pipeline 실패 알림
+# ============================================
+notify_pipeline_failed:
+  stage: notify
+  image: alpine:latest
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: on_failure
+    - if: $CI_COMMIT_BRANCH =~ /^(develop|release)$/ && $CI_PIPELINE_SOURCE == "push"
+      when: on_failure
+  before_script:
+    - apk add --no-cache curl
+  script:
+    - |
+      echo "❌ Pipeline failed! Sending notification..."
+      
+      AUTHOR="$GITLAB_USER_NAME"
+      
+      # MR인 경우와 일반 push인 경우 구분
+      if [ -n "$CI_MERGE_REQUEST_IID" ]; then
+        TITLE=$(echo "$CI_MERGE_REQUEST_TITLE" | sed 's/"/\\"/g')
+        LINK="${CI_MERGE_REQUEST_PROJECT_URL}/-/merge_requests/${CI_MERGE_REQUEST_IID}"
+        CONTEXT="MR: $TITLE"
+      else
+        COMMIT_MSG=$(echo "$CI_COMMIT_MESSAGE" | head -1 | sed 's/"/\\"/g')
+        LINK="${CI_PROJECT_URL}/-/pipelines/${CI_PIPELINE_ID}"
+        CONTEXT="Commit: $COMMIT_MSG"
+      fi
+      
+      curl -s -X POST -H 'Content-Type: application/json' -d '{
+        "username": "'"$AUTHOR"'",
+        "icon_url": "https://about.gitlab.com/images/press/press-kit-icon.svg",
+        "attachments": [
+          {
+            "color": "#dc3545",
+            "text": "### :x: Pipeline Failed! :x:\n\n:twisted_rightwards_arrows: ['"$CONTEXT"']('"$LINK"')\n\n:pencil2: **Author:** @'"$AUTHOR"'\n:dart: **Branch:** `'"${CI_COMMIT_BRANCH:-$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}"'`\n\n**파이프라인 로그를 확인해주세요!**\n:link: [파이프라인 보기]('"${CI_PROJECT_URL}/-/pipelines/${CI_PIPELINE_ID}"')"
+          }
+        ]
+      }' "$MATTERMOST_WEBHOOK_URL"
+      
+      echo "✅ Failure notification sent!"
